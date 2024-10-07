@@ -68,23 +68,23 @@
 
       if (side === 0) {
         // Spawn from top, moving down
-        bullet.x = getRandomInt(0, 25) * grid;
+        bullet.x = getRandomInt(0, canvas.width / grid) * grid;
         bullet.y = 0;
         bullet.dy = grid;
       } else if (side === 1) {
         // Spawn from bottom, moving up
-        bullet.x = getRandomInt(0, 25) * grid;
+        bullet.x = getRandomInt(0, canvas.width / grid) * grid;
         bullet.y = canvas.height;
         bullet.dy = -grid;
       } else if (side === 2) {
         // Spawn from left, moving right
         bullet.x = 0;
-        bullet.y = getRandomInt(0, 25) * grid;
+        bullet.y = getRandomInt(0, canvas.height / grid) * grid;
         bullet.dx = grid;
       } else {
         // Spawn from right, moving left
         bullet.x = canvas.width;
-        bullet.y = getRandomInt(0, 25) * grid;
+        bullet.y = getRandomInt(0, canvas.height / grid) * grid;
         bullet.dx = -grid;
       }
 
@@ -154,8 +154,8 @@
         }
       });
 
-      // Create bullets periodically
-      if (Math.random() < 0.05) {
+      // Create bullets more frequently
+      if (Math.random() < 0.1) { // Increased probability
         createBullet();
       }
 
