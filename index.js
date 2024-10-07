@@ -28,26 +28,36 @@ window.onload = function() {
     startButton.addEventListener("click", () => {
         if (!gameStarted) {
             resetGame();
-            gameLoop();
             gameStarted = true;
             startButton.style.display = "none"; // Hide start button
+            gameLoop();
         }
     });
 
     // Reset the game state
     function resetGame() {
-        snake = [];
-        snake[0] = { x: Math.floor(cols / 2) * box, y: Math.floor(rows / 2) * box }; // Snake starting position
+        // Initialize snake with 1 segment in the center
+        snake = [
+            { x: Math.floor(cols / 2) * box, y: Math.floor(rows / 2) * box }
+        ];
 
+        // Place food at a random position
         food = {
             x: Math.floor(Math.random() * cols) * box,
             y: Math.floor(Math.random() * rows) * box
         };
 
+        // Reset score and direction
         score = 0;
         direction = null;
         gameOver = false;
         document.getElementById("score").textContent = score;
+
+        // Clear the canvas to reset the game visuals
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // Draw the initial state
+        draw();
     }
 
     // Update game state
@@ -57,6 +67,7 @@ window.onload = function() {
         let headX = snake[0].x;
         let headY = snake[0].y;
 
+        // Move the snake in the current direction
         if (direction === "UP") headY -= box;
         if (direction === "DOWN") headY += box;
         if (direction === "LEFT") headX -= box;
@@ -95,17 +106,17 @@ window.onload = function() {
         snake.unshift({ x: headX, y: headY });
     }
 
-    // Draw game
+    // Draw game elements
     function draw() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-        // Draw snake
+        // Draw the snake
         for (let i = 0; i < snake.length; i++) {
             ctx.fillStyle = i === 0 ? "lime" : "white";
             ctx.fillRect(snake[i].x, snake[i].y, box, box);
         }
 
-        // Draw food
+        // Draw the food
         ctx.fillStyle = "red";
         ctx.fillRect(food.x, food.y, box, box);
     }
@@ -115,7 +126,7 @@ window.onload = function() {
         if (!gameOver) {
             update();
             draw();
-            setTimeout(gameLoop, 100);
+            setTimeout(gameLoop, 100); // Continue the game loop
         }
     }
 };
