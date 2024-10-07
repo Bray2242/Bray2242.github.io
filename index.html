@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Snake Game with Bullet Hell</title>
+  <title>Snake Game with Bullet Hell and Leaderboard</title>
   <style>
     html, body {
       height: 100%;
@@ -20,7 +20,7 @@
       border: 1px solid white;
     }
 
-    #score {
+    #score, #highScore {
       color: white;
       font-size: 20px;
       margin-bottom: 10px;
@@ -28,6 +28,7 @@
   </style>
 </head>
 <body>
+  <div id="highScore">High Score: 0</div>
   <div id="score">Score: 0</div>
   <canvas width="400" height="400" id="game"></canvas>
 
@@ -35,11 +36,16 @@
     var canvas = document.getElementById('game');
     var context = canvas.getContext('2d');
     var scoreElement = document.getElementById('score');
+    var highScoreElement = document.getElementById('highScore');
 
-    var grid = 20; // Adjusted grid size for each square
+    var grid = 20;
     var count = 0;
     var score = 0;
-    var bulletSpawnRate = 0.1; // Increased initial bullet spawn rate
+    var highScore = localStorage.getItem('highScore') || 0;  // Load high score from localStorage
+    var bulletSpawnRate = 0.1;
+
+    // Display initial high score
+    highScoreElement.textContent = "High Score: " + highScore;
 
     var snake = {
       x: 160,
@@ -50,12 +56,12 @@
       maxCells: 4
     };
 
-    var apple = { x: 320, y: 320, size: grid }; // Define apple with size
+    var apple = { x: 320, y: 320, size: grid };
 
-    // Bullets array
+    // Array to store bullets
     var bullets = [];
 
-    // Function to create a new bullet from a random edge
+    // Function to create bullets from random sides of the grid
     function createBullet() {
       var bullet = {
         x: 0,
@@ -64,28 +70,24 @@
         dy: 0
       };
 
-      // Randomly select one of the four sides (0: top, 1: bottom, 2: left, 3: right)
-      var side = getRandomInt(0, 4);
-
+      // Randomly select which side the bullet will come from
+      var side = Math.floor(Math.random() * 4);
+      
       if (side === 0) {
-        // Spawn from top, moving down
-        bullet.x = getRandomInt(0, canvas.width / grid) * grid;
+        bullet.x = Math.floor(Math.random() * (canvas.width / grid)) * grid;
         bullet.y = 0;
         bullet.dy = grid;
       } else if (side === 1) {
-        // Spawn from bottom, moving up
-        bullet.x = getRandomInt(0, canvas.width / grid) * grid;
+        bullet.x = Math.floor(Math.random() * (canvas.width / grid)) * grid;
         bullet.y = canvas.height - grid;
         bullet.dy = -grid;
       } else if (side === 2) {
-        // Spawn from left, moving right
         bullet.x = 0;
-        bullet.y = getRandomInt(0, canvas.height / grid) * grid;
+        bullet.y = Math.floor(Math.random() * (canvas.height / grid)) * grid;
         bullet.dx = grid;
       } else {
-        // Spawn from right, moving left
         bullet.x = canvas.width - grid;
-        bullet.y = getRandomInt(0, canvas.height / grid) * grid;
+        bullet.y = Math.floor(Math.random() * (canvas.height / grid)) * grid;
         bullet.dx = -grid;
       }
 
@@ -97,6 +99,7 @@
       return Math.floor(Math.random() * (max - min)) + min;
     }
 
+    // Main game loop
     function loop() {
       requestAnimationFrame(loop);
 
@@ -107,62 +110,61 @@
       count = 0;
       context.clearRect(0, 0, canvas.width, canvas.height);
 
-      // Move the snake
+      // Move snake position by velocity
       snake.x += snake.dx;
       snake.y += snake.dy;
 
-      // Wrap snake position horizontally on edge of screen
+      // Wrap around the canvas edges
       if (snake.x < 0) {
         snake.x = canvas.width - grid;
       } else if (snake.x >= canvas.width) {
         snake.x = 0;
       }
 
-      // Wrap snake position vertically on edge of screen
       if (snake.y < 0) {
         snake.y = canvas.height - grid;
       } else if (snake.y >= canvas.height) {
         snake.y = 0;
       }
 
+      // Track the snake's body cells
       snake.cells.unshift({x: snake.x, y: snake.y});
       if (snake.cells.length > snake.maxCells) {
         snake.cells.pop();
       }
 
-      // Draw the apple
+      // Draw apple
       context.fillStyle = 'red';
-      context.fillRect(apple.x, apple.y, apple.size - 1, apple.size - 1); // Ensure apple fits in grid
+      context.fillRect(apple.x, apple.y, apple.size - 1, apple.size - 1);
 
-      // Draw the snake
+      // Draw snake
       context.fillStyle = 'green';
       snake.cells.forEach(function(cell, index) {
         context.fillRect(cell.x, cell.y, grid - 1, grid - 1);
 
-        // Snake eats apple
+        // Check if snake eats apple
         if (cell.x === apple.x && cell.y === apple.y) {
           snake.maxCells++;
           score++;
           scoreElement.textContent = "Score: " + score;
 
-          // Ensure apples do not spawn on the edges
+          // Generate a new apple, not on the edges
           do {
             apple.x = getRandomInt(1, (canvas.width / grid) - 1) * grid;
             apple.y = getRandomInt(1, (canvas.height / grid) - 1) * grid;
           } while (apple.x === 0 || apple.x === canvas.width || apple.y === 0 || apple.y === canvas.height);
         }
 
-        // Check collision with bullets only for the head of the snake
+        // Check collision with bullets (only for the head)
         if (index === 0) {
-          bullets.forEach(function(bullet, bulletIndex) {
-            // Check collision with bullet using exact grid position
+          bullets.forEach(function(bullet) {
             if (bullet.x === snake.x && bullet.y === snake.y) {
               resetGame();
             }
           });
         }
 
-        // Snake collides with itself
+        // Check self-collision
         for (var i = index + 1; i < snake.cells.length; i++) {
           if (cell.x === snake.cells[i].x && cell.y === snake.cells[i].y) {
             resetGame();
@@ -170,32 +172,39 @@
         }
       });
 
-      // Create bullets based on score (spawn more bullets over time)
-      if (Math.random() < bulletSpawnRate) {
-        createBullet();
-      }
-
-      // Move and draw bullets
+      // Draw bullets
       context.fillStyle = 'yellow';
       bullets.forEach(function(bullet, index) {
         bullet.x += bullet.dx;
         bullet.y += bullet.dy;
 
-        // Draw bullet
         context.fillRect(bullet.x, bullet.y, grid - 1, grid - 1);
 
-        // Remove bullet if it moves off-screen
+        // Remove bullets that leave the screen
         if (bullet.x < 0 || bullet.x >= canvas.width || bullet.y < 0 || bullet.y >= canvas.height) {
           bullets.splice(index, 1);
         }
       });
 
+      // Spawn bullets based on score
+      if (Math.random() < bulletSpawnRate) {
+        createBullet();
+      }
+
       // Increase bullet spawn rate as the score increases
-      bulletSpawnRate = 0.1 + (score * 0.01); // Increases spawn rate as score grows
+      bulletSpawnRate = 0.1 + (score * 0.01);
     }
 
-    // Reset game when snake collides with itself or bullet
+    // Reset the game when the snake dies
     function resetGame() {
+      // Update high score if current score is higher
+      if (score > highScore) {
+        highScore = score;
+        localStorage.setItem('highScore', highScore);  // Save high score
+        highScoreElement.textContent = "High Score: " + highScore;
+      }
+
+      // Reset snake
       snake.x = 160;
       snake.y = 160;
       snake.cells = [];
@@ -203,34 +212,31 @@
       snake.dx = grid;
       snake.dy = 0;
 
-      // Ensure apples do not spawn on the edges
+      // Reset apple position
       do {
         apple.x = getRandomInt(1, (canvas.width / grid) - 1) * grid;
         apple.y = getRandomInt(1, (canvas.height / grid) - 1) * grid;
       } while (apple.x === 0 || apple.x === canvas.width || apple.y === 0 || apple.y === canvas.height);
 
+      // Reset score and bullets
       score = 0;
       scoreElement.textContent = "Score: " + score;
-
-      bullets = []; // Clear bullets on reset
-      bulletSpawnRate = 0.1; // Reset spawn rate
+      bullets = [];
+      bulletSpawnRate = 0.1;
     }
 
-    // Listen for arrow key presses to move the snake
+    // Keyboard controls for snake movement
     document.addEventListener('keydown', function(e) {
       if (e.which === 37 && snake.dx === 0) {
         snake.dx = -grid;
         snake.dy = 0;
-      }
-      else if (e.which === 38 && snake.dy === 0) {
+      } else if (e.which === 38 && snake.dy === 0) {
         snake.dy = -grid;
         snake.dx = 0;
-      }
-      else if (e.which === 39 && snake.dx === 0) {
+      } else if (e.which === 39 && snake.dx === 0) {
         snake.dx = grid;
         snake.dy = 0;
-      }
-      else if (e.which === 40 && snake.dy === 0) {
+      } else if (e.which === 40 && snake.dy === 0) {
         snake.dy = grid;
         snake.dx = 0;
       }
