@@ -1,153 +1,227 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Snake Game</title>
+  <title>Snake Game with Bullet Hell</title>
   <style>
-  html, body {
-    height: 100%;
-    margin: 0;
-  }
+    html, body {
+      height: 100%;
+      margin: 0;
+    }
 
-  body {
-    background: black;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-direction: column; /* Align the canvas and score vertically */
-  }
+    body {
+      background: black;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+    }
 
-  canvas {
-    border: 1px solid white;
-  }
+    canvas {
+      border: 1px solid white;
+    }
 
-  #score {
-    color: white;
-    font-size: 20px;
-    margin-bottom: 10px;
-  }
+    #score {
+      color: white;
+      font-size: 20px;
+      margin-bottom: 10px;
+    }
   </style>
 </head>
 <body>
-  <div id="score">Score: 0</div> <!-- Score display -->
+  <div id="score">Score: 0</div>
   <canvas width="400" height="400" id="game"></canvas>
-  
+
   <script>
-  var canvas = document.getElementById('game');
-  var context = canvas.getContext('2d');
-  var scoreElement = document.getElementById('score');
+    var canvas = document.getElementById('game');
+    var context = canvas.getContext('2d');
+    var scoreElement = document.getElementById('score');
 
-  var grid = 16;
-  var count = 0;
-  var score = 0; // Initialize score
-  
-  var snake = {
-    x: 160,
-    y: 160,
+    var grid = 16;
+    var count = 0;
+    var score = 0;
     
-    dx: grid,
-    dy: 0,
-    
-    cells: [],
-    maxCells: 4
-  };
-  var apple = {
-    x: 320,
-    y: 320
-  };
+    var snake = {
+      x: 160,
+      y: 160,
+      dx: grid,
+      dy: 0,
+      cells: [],
+      maxCells: 4
+    };
 
-  function getRandomInt(min, max) {
-    return Math.floor(Math.random() * (max - min)) + min;
-  }
+    var apple = { x: 320, y: 320 };
 
-  function loop() {
-    requestAnimationFrame(loop);
+    // Bullets array
+    var bullets = [];
 
-    if (++count < 4) {
-      return;
-    }
+    // Function to create a new bullet from a random edge
+    function createBullet() {
+      var bullet = {
+        x: 0,
+        y: 0,
+        dx: 0,
+        dy: 0
+      };
 
-    count = 0;
-    context.clearRect(0,0,canvas.width,canvas.height);
+      // Randomly select one of the four sides (0: top, 1: bottom, 2: left, 3: right)
+      var side = getRandomInt(0, 4);
 
-    snake.x += snake.dx;
-    snake.y += snake.dy;
-
-    if (snake.x < 0) {
-      snake.x = canvas.width - grid;
-    } else if (snake.x >= canvas.width) {
-      snake.x = 0;
-    }
-    
-    if (snake.y < 0) {
-      snake.y = canvas.height - grid;
-    } else if (snake.y >= canvas.height) {
-      snake.y = 0;
-    }
-
-    snake.cells.unshift({x: snake.x, y: snake.y});
-
-    if (snake.cells.length > snake.maxCells) {
-      snake.cells.pop();
-    }
-
-    // Draw apple
-    context.fillStyle = 'red';
-    context.fillRect(apple.x, apple.y, grid-1, grid-1);
-
-    // Draw snake
-    context.fillStyle = 'green';
-    snake.cells.forEach(function(cell, index) {
-      context.fillRect(cell.x, cell.y, grid-1, grid-1);
-
-      // Snake ate apple
-      if (cell.x === apple.x && cell.y === apple.y) {
-        snake.maxCells++;
-        score++; // Increment score
-        scoreElement.textContent = "Score: " + score; // Update score display
-
-        apple.x = getRandomInt(0, 25) * grid;
-        apple.y = getRandomInt(0, 25) * grid;
+      if (side === 0) {
+        // Spawn from top, moving down
+        bullet.x = getRandomInt(0, 25) * grid;
+        bullet.y = 0;
+        bullet.dy = grid;
+      } else if (side === 1) {
+        // Spawn from bottom, moving up
+        bullet.x = getRandomInt(0, 25) * grid;
+        bullet.y = canvas.height;
+        bullet.dy = -grid;
+      } else if (side === 2) {
+        // Spawn from left, moving right
+        bullet.x = 0;
+        bullet.y = getRandomInt(0, 25) * grid;
+        bullet.dx = grid;
+      } else {
+        // Spawn from right, moving left
+        bullet.x = canvas.width;
+        bullet.y = getRandomInt(0, 25) * grid;
+        bullet.dx = -grid;
       }
 
-      for (var i = index + 1; i < snake.cells.length; i++) {
-        if (cell.x === snake.cells[i].x && cell.y === snake.cells[i].y) {
-          snake.x = 160;
-          snake.y = 160;
-          snake.cells = [];
-          snake.maxCells = 4;
-          snake.dx = grid;
-          snake.dy = 0;
+      bullets.push(bullet);
+    }
+
+    // Get random integers for grid placement
+    function getRandomInt(min, max) {
+      return Math.floor(Math.random() * (max - min)) + min;
+    }
+
+    function loop() {
+      requestAnimationFrame(loop);
+
+      if (++count < 4) {
+        return;
+      }
+
+      count = 0;
+      context.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Move the snake
+      snake.x += snake.dx;
+      snake.y += snake.dy;
+
+      if (snake.x < 0) {
+        snake.x = canvas.width - grid;
+      } else if (snake.x >= canvas.width) {
+        snake.x = 0;
+      }
+
+      if (snake.y < 0) {
+        snake.y = canvas.height - grid;
+      } else if (snake.y >= canvas.height) {
+        snake.y = 0;
+      }
+
+      snake.cells.unshift({x: snake.x, y: snake.y});
+      if (snake.cells.length > snake.maxCells) {
+        snake.cells.pop();
+      }
+
+      // Draw the apple
+      context.fillStyle = 'red';
+      context.fillRect(apple.x, apple.y, grid-1, grid-1);
+
+      // Draw the snake
+      context.fillStyle = 'green';
+      snake.cells.forEach(function(cell, index) {
+        context.fillRect(cell.x, cell.y, grid-1, grid-1);
+
+        // Snake eats apple
+        if (cell.x === apple.x && cell.y === apple.y) {
+          snake.maxCells++;
+          score++;
+          scoreElement.textContent = "Score: " + score;
 
           apple.x = getRandomInt(0, 25) * grid;
           apple.y = getRandomInt(0, 25) * grid;
-
-          score = 0; // Reset score on collision
-          scoreElement.textContent = "Score: " + score; // Reset score display
         }
-      }
-    });
-  }
 
-  document.addEventListener('keydown', function(e) {
-    if (e.which === 37 && snake.dx === 0) {
-      snake.dx = -grid;
-      snake.dy = 0;
+        // Snake collides with itself
+        for (var i = index + 1; i < snake.cells.length; i++) {
+          if (cell.x === snake.cells[i].x && cell.y === snake.cells[i].y) {
+            resetGame();
+          }
+        }
+      });
+
+      // Create bullets periodically
+      if (Math.random() < 0.05) {
+        createBullet();
+      }
+
+      // Move and draw bullets
+      context.fillStyle = 'yellow';
+      bullets.forEach(function(bullet, index) {
+        bullet.x += bullet.dx;
+        bullet.y += bullet.dy;
+
+        // Draw bullet
+        context.fillRect(bullet.x, bullet.y, grid - 1, grid - 1);
+
+        // Check collision with snake
+        snake.cells.forEach(function(cell) {
+          if (cell.x === bullet.x && cell.y === bullet.y) {
+            resetGame();
+          }
+        });
+
+        // Remove bullet if it moves off-screen
+        if (bullet.x < 0 || bullet.x >= canvas.width || bullet.y < 0 || bullet.y >= canvas.height) {
+          bullets.splice(index, 1);
+        }
+      });
     }
-    else if (e.which === 38 && snake.dy === 0) {
-      snake.dy = -grid;
-      snake.dx = 0;
-    }
-    else if (e.which === 39 && snake.dx === 0) {
+
+    // Reset game when snake collides with itself or bullet
+    function resetGame() {
+      snake.x = 160;
+      snake.y = 160;
+      snake.cells = [];
+      snake.maxCells = 4;
       snake.dx = grid;
       snake.dy = 0;
-    }
-    else if (e.which === 40 && snake.dy === 0) {
-      snake.dy = grid;
-      snake.dx = 0;
-    }
-  });
 
-  requestAnimationFrame(loop);
+      apple.x = getRandomInt(0, 25) * grid;
+      apple.y = getRandomInt(0, 25) * grid;
+
+      score = 0;
+      scoreElement.textContent = "Score: " + score;
+
+      bullets = []; // Clear bullets on reset
+    }
+
+    // Listen for arrow key presses to move the snake
+    document.addEventListener('keydown', function(e) {
+      if (e.which === 37 && snake.dx === 0) {
+        snake.dx = -grid;
+        snake.dy = 0;
+      }
+      else if (e.which === 38 && snake.dy === 0) {
+        snake.dy = -grid;
+        snake.dx = 0;
+      }
+      else if (e.which === 39 && snake.dx === 0) {
+        snake.dx = grid;
+        snake.dy = 0;
+      }
+      else if (e.which === 40 && snake.dy === 0) {
+        snake.dy = grid;
+        snake.dx = 0;
+      }
+    });
+
+    // Start the game loop
+    requestAnimationFrame(loop);
   </script>
 </body>
 </html>
