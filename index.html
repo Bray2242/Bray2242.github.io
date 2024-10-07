@@ -36,7 +36,7 @@
     var context = canvas.getContext('2d');
     var scoreElement = document.getElementById('score');
 
-    var grid = 24; // Adjusted grid size for each square
+    var grid = 20; // Adjusted grid size for each square
     var count = 0;
     var score = 0;
     var bulletSpawnRate = 0.05; // Initial bullet spawn rate
@@ -75,7 +75,7 @@
       } else if (side === 1) {
         // Spawn from bottom, moving up
         bullet.x = getRandomInt(0, canvas.width / grid) * grid;
-        bullet.y = canvas.height - grid; // Adjusted to spawn above bottom edge
+        bullet.y = canvas.height - grid;
         bullet.dy = -grid;
       } else if (side === 2) {
         // Spawn from left, moving right
@@ -84,7 +84,7 @@
         bullet.dx = grid;
       } else {
         // Spawn from right, moving left
-        bullet.x = canvas.width - grid; // Adjusted to spawn before right edge
+        bullet.x = canvas.width - grid;
         bullet.y = getRandomInt(0, canvas.height / grid) * grid;
         bullet.dx = -grid;
       }
