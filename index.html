@@ -29,14 +29,14 @@
 </head>
 <body>
   <div id="score">Score: 0</div>
-  <canvas width="400" height="400" id="game"></canvas>
+  <canvas width="800" height="800" id="game"></canvas>
 
   <script>
     var canvas = document.getElementById('game');
     var context = canvas.getContext('2d');
     var scoreElement = document.getElementById('score');
 
-    var grid = 16;
+    var grid = 32; // Increased grid size for larger area
     var count = 0;
     var score = 0;
     
@@ -110,12 +110,14 @@
       snake.x += snake.dx;
       snake.y += snake.dy;
 
+      // Wrap snake position horizontally on edge of screen
       if (snake.x < 0) {
         snake.x = canvas.width - grid;
       } else if (snake.x >= canvas.width) {
         snake.x = 0;
       }
 
+      // Wrap snake position vertically on edge of screen
       if (snake.y < 0) {
         snake.y = canvas.height - grid;
       } else if (snake.y >= canvas.height) {
@@ -129,12 +131,12 @@
 
       // Draw the apple
       context.fillStyle = 'red';
-      context.fillRect(apple.x, apple.y, grid-1, grid-1);
+      context.fillRect(apple.x, apple.y, grid - 1, grid - 1);
 
       // Draw the snake
       context.fillStyle = 'green';
       snake.cells.forEach(function(cell, index) {
-        context.fillRect(cell.x, cell.y, grid-1, grid-1);
+        context.fillRect(cell.x, cell.y, grid - 1, grid - 1);
 
         // Snake eats apple
         if (cell.x === apple.x && cell.y === apple.y) {
@@ -142,8 +144,20 @@
           score++;
           scoreElement.textContent = "Score: " + score;
 
-          apple.x = getRandomInt(0, 25) * grid;
-          apple.y = getRandomInt(0, 25) * grid;
+          // Ensure apples do not spawn on the edges
+          do {
+            apple.x = getRandomInt(1, (canvas.width / grid) - 1) * grid;
+            apple.y = getRandomInt(1, (canvas.height / grid) - 1) * grid;
+          } while (apple.x === 0 || apple.x === canvas.width || apple.y === 0 || apple.y === canvas.height);
+        }
+
+        // Check collision with bullets, only if the head of the snake collides
+        if (index === 0) {
+          bullets.forEach(function(bullet) {
+            if (bullet.x === snake.x && bullet.y === snake.y) {
+              resetGame();
+            }
+          });
         }
 
         // Snake collides with itself
@@ -168,13 +182,6 @@
         // Draw bullet
         context.fillRect(bullet.x, bullet.y, grid - 1, grid - 1);
 
-        // Check collision with snake
-        snake.cells.forEach(function(cell) {
-          if (cell.x === bullet.x && cell.y === bullet.y) {
-            resetGame();
-          }
-        });
-
         // Remove bullet if it moves off-screen
         if (bullet.x < 0 || bullet.x >= canvas.width || bullet.y < 0 || bullet.y >= canvas.height) {
           bullets.splice(index, 1);
@@ -191,8 +198,11 @@
       snake.dx = grid;
       snake.dy = 0;
 
-      apple.x = getRandomInt(0, 25) * grid;
-      apple.y = getRandomInt(0, 25) * grid;
+      // Ensure apples do not spawn on the edges
+      do {
+        apple.x = getRandomInt(1, (canvas.width / grid) - 1) * grid;
+        apple.y = getRandomInt(1, (canvas.height / grid) - 1) * grid;
+      } while (apple.x === 0 || apple.x === canvas.width || apple.y === 0 || apple.y === canvas.height);
 
       score = 0;
       scoreElement.textContent = "Score: " + score;
