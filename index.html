@@ -50,7 +50,7 @@
       maxCells: 4
     };
 
-    var apple = { x: 320, y: 320 };
+    var apple = { x: 320, y: 320, size: grid }; // Define apple with size
 
     // Bullets array
     var bullets = [];
@@ -75,7 +75,7 @@
       } else if (side === 1) {
         // Spawn from bottom, moving up
         bullet.x = getRandomInt(0, canvas.width / grid) * grid;
-        bullet.y = canvas.height;
+        bullet.y = canvas.height - grid; // Adjusted to spawn above bottom edge
         bullet.dy = -grid;
       } else if (side === 2) {
         // Spawn from left, moving right
@@ -84,7 +84,7 @@
         bullet.dx = grid;
       } else {
         // Spawn from right, moving left
-        bullet.x = canvas.width;
+        bullet.x = canvas.width - grid; // Adjusted to spawn before right edge
         bullet.y = getRandomInt(0, canvas.height / grid) * grid;
         bullet.dx = -grid;
       }
@@ -132,7 +132,7 @@
 
       // Draw the apple
       context.fillStyle = 'red';
-      context.fillRect(apple.x, apple.y, grid - 1, grid - 1);
+      context.fillRect(apple.x, apple.y, apple.size - 1, apple.size - 1); // Ensure apple fits in grid
 
       // Draw the snake
       context.fillStyle = 'green';
@@ -152,9 +152,10 @@
           } while (apple.x === 0 || apple.x === canvas.width || apple.y === 0 || apple.y === canvas.height);
         }
 
-        // Check collision with bullets, only if the head of the snake collides
+        // Check collision with bullets only for the head of the snake
         if (index === 0) {
           bullets.forEach(function(bullet, bulletIndex) {
+            // Check collision with bullet
             if (bullet.x === snake.x && bullet.y === snake.y) {
               resetGame();
             }
