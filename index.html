@@ -29,14 +29,14 @@
 </head>
 <body>
   <div id="score">Score: 0</div>
-  <canvas width="800" height="800" id="game"></canvas>
+  <canvas width="400" height="400" id="game"></canvas>
 
   <script>
     var canvas = document.getElementById('game');
     var context = canvas.getContext('2d');
     var scoreElement = document.getElementById('score');
 
-    var grid = 20; // Adjusted grid size for smaller squares (20 pixels)
+    var grid = 20; // Grid size for each square
     var count = 0;
     var score = 0;
     
@@ -153,7 +153,7 @@
 
         // Check collision with bullets, only if the head of the snake collides
         if (index === 0) {
-          bullets.forEach(function(bullet) {
+          bullets.forEach(function(bullet, bulletIndex) {
             if (bullet.x === snake.x && bullet.y === snake.y) {
               resetGame();
             }
