@@ -7,16 +7,14 @@ window.onload = function() {
     const cols = canvas.width / box;
 
     let snake = [];
-    snake[0] = { x: Math.floor(cols / 2) * box, y: Math.floor(rows / 2) * box }; // Snake starting position
-
-    let food = {
-        x: Math.floor(Math.random() * cols) * box,
-        y: Math.floor(Math.random() * rows) * box
-    };
-
+    let food;
     let score = 0;
     let direction = null;
     let gameOver = false;
+    let gameStarted = false;
+
+    // Get button element
+    const startButton = document.getElementById("startButton");
 
     // Snake control
     document.addEventListener("keydown", event => {
@@ -25,6 +23,32 @@ window.onload = function() {
         else if (event.key === "ArrowLeft" && direction !== "RIGHT") direction = "LEFT";
         else if (event.key === "ArrowRight" && direction !== "LEFT") direction = "RIGHT";
     });
+
+    // Start the game when the button is clicked
+    startButton.addEventListener("click", () => {
+        if (!gameStarted) {
+            resetGame();
+            gameLoop();
+            gameStarted = true;
+            startButton.style.display = "none"; // Hide start button
+        }
+    });
+
+    // Reset the game state
+    function resetGame() {
+        snake = [];
+        snake[0] = { x: Math.floor(cols / 2) * box, y: Math.floor(rows / 2) * box }; // Snake starting position
+
+        food = {
+            x: Math.floor(Math.random() * cols) * box,
+            y: Math.floor(Math.random() * rows) * box
+        };
+
+        score = 0;
+        direction = null;
+        gameOver = false;
+        document.getElementById("score").textContent = score;
+    }
 
     // Update game state
     function update() {
@@ -94,7 +118,4 @@ window.onload = function() {
             setTimeout(gameLoop, 100);
         }
     }
-
-    // Start the game loop
-    gameLoop();
 };
