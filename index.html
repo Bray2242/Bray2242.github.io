@@ -36,10 +36,11 @@
     var context = canvas.getContext('2d');
     var scoreElement = document.getElementById('score');
 
-    var grid = 20; // Grid size for each square
+    var grid = 24; // Adjusted grid size for each square
     var count = 0;
     var score = 0;
-    
+    var bulletSpawnRate = 0.05; // Initial bullet spawn rate
+
     var snake = {
       x: 160,
       y: 160,
@@ -168,8 +169,8 @@
         }
       });
 
-      // Create bullets more frequently
-      if (Math.random() < 0.1) { // Increased probability
+      // Create bullets based on score
+      if (Math.random() < bulletSpawnRate) {
         createBullet();
       }
 
@@ -187,6 +188,9 @@
           bullets.splice(index, 1);
         }
       });
+
+      // Increase bullet spawn rate as the score increases
+      bulletSpawnRate = 0.05 + (score * 0.001); // Increases spawn rate slightly with score
     }
 
     // Reset game when snake collides with itself or bullet
@@ -208,6 +212,7 @@
       scoreElement.textContent = "Score: " + score;
 
       bullets = []; // Clear bullets on reset
+      bulletSpawnRate = 0.05; // Reset spawn rate
     }
 
     // Listen for arrow key presses to move the snake
