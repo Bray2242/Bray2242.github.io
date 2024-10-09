@@ -44,16 +44,15 @@
     var highScore = localStorage.getItem('highScore') || 0;  // Load high score from localStorage
     var bulletSpawnRate = 0.1;
 
-    // Display initial high score
-    highScoreElement.textContent = "High Score: " + highScore;
-
     var snake = {
       x: 160,
       y: 160,
       dx: grid,
       dy: 0,
       cells: [],
-      maxCells: 4
+      maxCells: 4,
+      invincible: false,   // Track invincibility state
+      invincibilityTimer: 0 // Timer for invincibility
     };
 
     var apple = { x: 320, y: 320, size: grid };
@@ -137,9 +136,15 @@
       context.fillStyle = 'red';
       context.fillRect(apple.x, apple.y, apple.size - 1, apple.size - 1);
 
-      // Draw snake
-      context.fillStyle = 'green';
+      // Draw snake with an orange outline if invincible
       snake.cells.forEach(function(cell, index) {
+        if (snake.invincible) {
+          context.strokeStyle = 'orange';
+          context.lineWidth = 2;
+          context.strokeRect(cell.x, cell.y, grid - 1, grid - 1);
+        }
+
+        context.fillStyle = 'green';
         context.fillRect(cell.x, cell.y, grid - 1, grid - 1);
 
         // Check if snake eats apple
@@ -155,8 +160,8 @@
           } while (apple.x === 0 || apple.x === canvas.width || apple.y === 0 || apple.y === canvas.height);
         }
 
-        // Check collision with bullets (only for the head)
-        if (index === 0) {
+        // Check collision with bullets (only for the head, and only if not invincible)
+        if (index === 0 && !snake.invincible) {
           bullets.forEach(function(bullet) {
             if (bullet.x === snake.x && bullet.y === snake.y) {
               resetGame();
@@ -193,6 +198,15 @@
 
       // Increase bullet spawn rate as the score increases
       bulletSpawnRate = 0.1 + (score * 0.01);
+
+      // Handle invincibility timer
+      if (snake.invincible) {
+        snake.invincibilityTimer--;
+
+        if (snake.invincibilityTimer <= 0) {
+          snake.invincible = false;
+        }
+      }
     }
 
     // Reset the game when the snake dies
@@ -239,11 +253,4 @@
       } else if (e.which === 40 && snake.dy === 0) {
         snake.dy = grid;
         snake.dx = 0;
-      }
-    });
-
-    // Start the game loop
-    requestAnimationFrame(loop);
-  </script>
-</body>
-</html>
+      } else if (e.which === 32 && !snake.invincible
